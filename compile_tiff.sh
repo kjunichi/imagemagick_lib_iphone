@@ -27,6 +27,7 @@ tiff () {
 	if [ "$1" == "armv7" ] || [ "$1" == "armv7s" ] || [ "$1" == "arm64" ]; then
 		save
 		armflags $1
+		echo "CFLAGS = $CFLAGS"
 		echo "[|- CONFIG $BUILDINGFOR]"
 		try ./configure prefix=$TIFF_LIB_DIR --enable-shared --enable-static --disable-cxx --host=arm-apple-darwin
 		tiff_compile

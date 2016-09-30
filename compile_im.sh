@@ -38,12 +38,16 @@ im () {
 	if [ "$1" == "armv7" ] || [ "$1" == "armv7s" ] || [ "$1" == "arm64" ]; then
 		save
 		armflags $1
+		export PNG_CFLAGS="-I$LIB_DIR/include/png"
+		export PNG_LIBS="-L$LIB_DIR/png_${BUILDINGFOR}_dylib/"
 		export CC="$(xcode-select -print-path)/usr/bin/gcc" # override clang
-		export CPPFLAGS="-I$LIB_DIR/include/jpeg -I$LIB_DIR/include/png -I$LIB_DIR/include/tiff"
-		export CFLAGS="$CFLAGS -DTARGET_OS_IPHONE"
-		export LDFLAGS="$LDFLAGS -L$LIB_DIR/jpeg_${BUILDINGFOR}_dylib/ -L$LIB_DIR/png_${BUILDINGFOR}_dylib/ -L$LIB_DIR/tiff_${BUILDINGFOR}_dylib/ -L$LIB_DIR"
+		export CXXFLAGS="-arch $1 -I$LIB_DIR/include/jpeg -I$LIB_DIR/include/png -I$LIB_DIR/include/tiff"
+		export CFLAGS="-I$LIB_DIR/include/jpeg -I$LIB_DIR/include/png -I$LIB_DIR/include/tiff $CFLAGS -DTARGET_OS_IPHONE -I${IOSSDKROOT}/usr/include/libxml2"
+		export LDFLAGS="-L$LIB_DIR/jpeg_${BUILDINGFOR}_dylib/ -L$LIB_DIR/png_${BUILDINGFOR}_dylib/ -L$LIB_DIR/tiff_${BUILDINGFOR}_dylib/ -L$LIB_DIR $LDFLAGS"
 		echo "[|- CONFIG $BUILDINGFOR]"
 		try ./configure prefix=$IM_LIB_DIR --host=arm-apple-darwin \
+			--without-pango --without-fontconfig --without-freetype --without-lcms \
+			--without-fftw --without-flif --without-raqm --without-openexr --without-lzma \
 			--disable-opencl --disable-largefile --with-quantum-depth=8 --with-magick-plus-plus \
 			--without-perl --without-x --disable-shared --disable-openmp --without-bzlib --without-freetype 
 		im_compile
@@ -51,13 +55,23 @@ im () {
 	elif [ "$1" == "i386" ] || [ "$1" == "x86_64" ]; then
 		save
 		intelflags $1
-		export CPPFLAGS="$CPPFLAGS -I$LIB_DIR/include/jpeg -I$LIB_DIR/include/png -I$LIB_DIR/include/tiff -I$SIMSDKROOT/usr/include"
+		export PNG_CFLAGS="-I$LIB_DIR/include/png"
+		export PNG_LIBS="-L$LIB_DIR/png_${BUILDINGFOR}_dylib/"
+		export CXXFLAGS="$CXXFLAGS -I$LIB_DIR/include/jpeg -I$LIB_DIR/include/png -I$LIB_DIR/include/tiff -I$SIMSDKROOT/usr/include -arch $1"
+		export CPPFLAGS=$CXXFLAGS
+		export CFLAGS="-I$LIB_DIR/include/jpeg -I$LIB_DIR/include/png -I$LIB_DIR/include/tiff $CFLAGS -DTARGET_OS_IPHONE -I${SIMSDKROOT}/usr/include/libxml2 -UMAGICKCORE_FONTCONFIG_DELEGATE -std=gnu99"
 		export LDFLAGS="$LDFLAGS -L$LIB_DIR/jpeg_${BUILDINGFOR}_dylib/ -L$LIB_DIR/png_${BUILDINGFOR}_dylib/ -L$LIB_DIR/tiff_${BUILDINGFOR}_dylib/ -L$LIB_DIR"
+		echo "CFLAGS = $CFLAGS"
+		echo "CPPFLAGS = $CPPFLAGS"
+		echo "CXXFLAGS = $CXXFLAGS"
 		echo "[|- CONFIG $BUILDINGFOR]"
 		try ./configure prefix=$IM_LIB_DIR --host=${BUILDINGFOR}-apple-darwin --disable-opencl \
+			--without-pango --without-fontconfig --without-freetype --without-lcms \
+                        --without-fftw --without-flif --without-raqm --without-openexr --without-lzma \
 			--disable-largefile --with-quantum-depth=8 --with-magick-plus-plus --without-perl --without-x \
 			--disable-shared --disable-openmp --without-bzlib --without-freetype --without-threads --disable-dependency-tracking
 		im_compile
+		unset CPPFLAGS
 		restore
 	else
 		echo "[ERR: Nothing to do for $1]"
@@ -98,6 +112,7 @@ im () {
 			accumul="$accumul -arch $i $LIB_DIR/$LIBNAME_magickpp.$i"
 		done
 		# combine the static libraries
+		echo "accumul = $accumul"
 		try lipo $accumul -create -output $LIB_DIR/libMagick++.a
 		echo "[+ DONE]"
 	fi

@@ -37,6 +37,7 @@ png () {
 		intelflags $1
 		echo "[|- CONFIG $BUILDINGFOR]"
 		export CC="$(xcode-select -print-path)/usr/bin/gcc" # override clang
+		export CFLAGS="$CFLAGS -arch $1"
 		try ./configure prefix=$PNG_LIB_DIR --enable-shared --enable-static --host=${BUILDINGFOR}-apple-darwin
 		png_compile
 		restore
@@ -51,6 +52,7 @@ png () {
 		for i in $ARCHS; do
 			accumul="$accumul -arch $i $LIB_DIR/libpng.a.$i"
 		done
+		echo "accumul = $accumul"
 		# combine the static libraries
 		try lipo $accumul -create -output $LIB_DIR/libpng.a
 		echo "[+ DONE]"
