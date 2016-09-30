@@ -1,3 +1,9 @@
+```
+brew unlink libpng
+```
+
+below is the original documents:
+
 <h2>Compiled downloads</h2>
 
 You can grab the latest compiled ImageMagick directly from their <a
